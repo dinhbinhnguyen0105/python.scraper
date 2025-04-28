@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS {constants.TABLE_RESULT} (
             raise Exception(
                 f"Failed to commit database transaction: {db.lastError().text()}"
             )
-
+        return True
     except Exception as e:
         if db.isValid() and db.isOpen() and db.transaction():
             db.rollback()

@@ -1,10 +1,11 @@
-import logging
 from typing import List, Any, Dict
 from contextlib import contextmanager
 from PyQt6.QtSql import QSqlQuery, QSqlDatabase
 
 from src import constants
-from src.my_types import IgnoreType, ResultType
+
+# from src.my_types import IgnoreType, ResultType
+from src.database.database import initialize_database
 
 
 @contextmanager
@@ -25,13 +26,10 @@ def transaction(db: QSqlDatabase):
 
 
 class BaseService:
-    """Base service providing common CRUD operations."""
-
     TABLE_NAME: str = ""
 
     @classmethod
     def get_db(cls) -> QSqlDatabase:
-        """Lazily fetch the database connection by name."""
         return QSqlDatabase.database(constants.DB_CONNECTION)
 
     @classmethod
@@ -44,19 +42,16 @@ class BaseService:
             error = query.lastError().text()
             sql = query.lastQuery()
             print(f"[QUERY_EXECUTION] Error on {cls.TABLE_NAME}: {error} -- SQL: {sql}")
-            query.finish()
             return False
-        query.finish()
         return True
 
     @classmethod
-    def _record_to_dict(cls, query: QSqlQuery) -> Dict[str, Any]:
-        """Convert current query record to dict."""
+    def _convert_record_to_dict(cls, query: QSqlQuery) -> Dict[str, Any]:
         record = query.record()
         return {record.fieldName(i): record.value(i) for i in range(record.count())}
 
     @classmethod
-    def read(cls, record_id: Any) -> Dict[str, Any] | None:
+    def read(cls, record_id: int) -> Dict[str, Any] | None:
         db = cls.get_db()
         query = QSqlQuery(db)
         sql = f"SELECT * FROM {cls.TABLE_NAME} WHERE id = :id"
@@ -67,7 +62,7 @@ class BaseService:
         if not cls._exec_query(query):
             return None
         if query.next():
-            return cls._record_to_dict(query)
+            return cls._convert_record_to_dict(query)
         print(f"[READ] No record with id={record_id} in {cls.TABLE_NAME}.")
         return None
 
@@ -80,10 +75,10 @@ class BaseService:
             print(f"[READ_ALL] Prepare failed: {query.lastError().text()}")
             return []
         if not cls._exec_query(query):
-            return []
+            return False
         results = []
         while query.next():
-            results.append(cls._record_to_dict(query))
+            results.append(cls._convert_record_to_dict(query))
         print(f"[READ_ALL] Retrieved {len(results)} from {cls.TABLE_NAME}.")
         return results
 
@@ -147,7 +142,7 @@ class BaseService:
         return True
 
     @classmethod
-    def value_exists(cls, value: Any) -> bool:
+    def is_field_value_exists(cls, value: Any) -> bool:
         db = cls.get_db()
         query = QSqlQuery(db)
         sql = f"SELECT 1 FROM {cls.TABLE_NAME} WHERE value = ? LIMIT 1"
@@ -165,7 +160,6 @@ class BaseService:
 
     @classmethod
     def import_data(cls, payload: List[Dict[str, Any]]) -> bool:
-        """Import payload list in one transaction, skipping duplicates by 'value' field."""
         if not payload:
             print(f"[IMPORT_DATA] Empty payload for {cls.TABLE_NAME}.")
             return False
@@ -173,7 +167,7 @@ class BaseService:
         with transaction(db):
             for record in payload:
                 val = record.get("value")
-                if val and cls.value_exists(val):
+                if val and cls.is_field_value_exists(val):
                     print(f"[IMPORT_DATA] Skip duplicate value: {val}")
                     continue
                 valid_cols = [c for c in cls.get_columns() if c in record]
@@ -188,15 +182,6 @@ class BaseService:
                     raise RuntimeError(f"Failed to import record: {record}")
         print(f"[IMPORT_DATA] Imported {len(payload)} into {cls.TABLE_NAME}.")
         return True
-
-    @classmethod
-    def export_data(cls) -> List[Dict[str, Any]]:
-        results = cls.read_all()
-        if not results:
-            print(f"[EXPORT_DATA] No data in {cls.TABLE_NAME}.")
-            return []
-        print(f"[EXPORT_DATA] Exported {len(results)} from {cls.TABLE_NAME}.")
-        return results
 
 
 class IgnorePhoneService(BaseService):
@@ -222,4 +207,31 @@ class ResultService(BaseService):
     def get_columns(cls) -> List[str]:
         return ["id", "post_url", "post_content", "created_at"]
 
-    # Inherits import_data/export_data from BaseService
+
+def main():
+    import sys
+    from PyQt6.QtWidgets import QApplication
+
+    app = QApplication([])
+    print("— Khởi tạo database …")
+    if initialize_database():
+        print("✅ Database đã khởi tạo/kiểm tra thành công.\n")
+        print("Prepare import ignore phone")
+        phone_payload = [
+            {"value": "0123456789"},
+            {"value": "0987654321"},
+            {"value": "0909406001"},
+            {"value": "0123456789"},  # giá trị trùng sẽ bị skip
+        ]
+        is_import = IgnorePhoneService.import_data(phone_payload)
+        if is_import:
+            print("✅ Import thành công.\n")
+        print("read [0]: ", IgnorePhoneService.read(0))
+        print("read_all: ", IgnorePhoneService.read_all())
+    else:
+        print("❎ Database đã khởi tạo/kiểm tra thất bại.\n")
+
+
+if __name__ == "__main__":
+
+    main()
