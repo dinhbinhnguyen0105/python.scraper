@@ -36,7 +36,7 @@
        <item>
         <layout class="QVBoxLayout" name="verticalLayout_5">
          <property name="bottomMargin">
-          <number>0</number>
+          <number>12</number>
          </property>
          <item>
           <widget class="QWidget" name="thread_num_container" native="true">
@@ -75,65 +75,6 @@
                  <string>Thread nums</string>
                 </property>
                </widget>
-              </item>
-             </layout>
-            </item>
-           </layout>
-          </widget>
-         </item>
-         <item>
-          <widget class="QWidget" name="thread_input_container" native="true">
-           <layout class="QVBoxLayout" name="verticalLayout_2">
-            <property name="spacing">
-             <number>0</number>
-            </property>
-            <property name="leftMargin">
-             <number>0</number>
-            </property>
-            <property name="topMargin">
-             <number>0</number>
-            </property>
-            <property name="rightMargin">
-             <number>0</number>
-            </property>
-            <property name="bottomMargin">
-             <number>0</number>
-            </property>
-            <item>
-             <layout class="QVBoxLayout" name="verticalLayout">
-              <item>
-               <widget class="QLabel" name="thread_label">
-                <property name="font">
-                 <font>
-                  <family>Courier New</family>
-                 </font>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">margin: 0;</string>
-                </property>
-                <property name="text">
-                 <string>Thread 1</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_3">
-                <item>
-                 <widget class="QLineEdit" name="thread_input">
-                  <property name="styleSheet">
-                   <string notr="true">margin: 0;
-padding-left: 4px;</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QPushButton" name="pushButton">
-                  <property name="text">
-                   <string>open_udd</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
               </item>
              </layout>
             </item>
@@ -365,6 +306,21 @@ padding-left: 4px;</string>
              </layout>
             </item>
            </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="progress_message_label">
+           <property name="font">
+            <font>
+             <family>Courier New</family>
+            </font>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">margin: 0;</string>
+           </property>
+           <property name="text">
+            <string>Progress message</string>
+           </property>
           </widget>
          </item>
         </layout>
