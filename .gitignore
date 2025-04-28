@@ -1,4 +1,6 @@
 .venv
+.vscode
+repositories
 __pycache__/
 *.pyc
 *.pyo
