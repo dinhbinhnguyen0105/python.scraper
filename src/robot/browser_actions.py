@@ -1,7 +1,7 @@
 import random, traceback, sys
 from time import sleep
 from PyQt6.QtCore import QObject, pyqtSignal
-from playwright.sync_api import Page, TimeoutError as PlaywrightTimeoutError
+from playwright.sync_api import Page, TimeoutError as PlaywrightTimeoutError, Locator
 
 from src import constants
 from src.my_types import TaskInfo
@@ -35,10 +35,6 @@ def on_scraping(
     signals: WorkerSignals,
 ):
     page.goto("https://www.facebook.com/groups/feed/", timeout=MIN)
-    # page_language = page.locator("html").get_attribute("lang")
-    # if page_language != "en":
-    #     signals.log_message.emit("Switch to English.")
-    #     return
     sidebar_locator = page.locator(
         f"{selectors.S_NAVIGATION}:not({selectors.S_BANNER} {selectors.S_NAVIGATION})"
     )
@@ -64,35 +60,67 @@ def on_scraping(
         if task_info.target_keywords:
             _ = False
             for target_keyword in task_info.target_keywords:
-                if target_keyword in group_text:
+                if target_keyword.lower() in group_text.lower():
                     _ = True
                     break
-            if _:
-                is_in_targets = _
-            else:
-                continue
+            is_in_targets = _
         else:
             is_in_targets = True
 
         if task_info.ignore_keywords:
             _ = True
             for ignore_keyword in task_info.ignore_keywords:
-                if ignore_keyword in group_text:
+                if ignore_keyword.lower() in group_text.lower():
                     _ = False
                     break
-            if _:
-                is_not_in_ignores = _
-            else:
-                continue
+            is_not_in_ignores = _
         else:
             is_not_in_ignores = True
-
         if is_in_targets and is_not_in_ignores:
             group_urls.append(group_url)
         else:
             continue
-
     # TODO crawl
+    for index, group_url in enumerate(group_urls):
+        page.goto(group_url, timeout=MIN / 2)
+        signals.main_progress_signal.emit(task_info.object_name, len(group_urls), index)
+        close_dialog(page)
+        feed_locators = page.locator(selectors.S_FEED)
+        try:
+            feed_locators.first.wait_for(state="attached", timeout=MIN / 2)
+        except PlaywrightTimeoutError:
+            continue
+        feed_locator: Locator = feed_locators.first
+        if not feed_locator:
+            continue
+
+        # task_info.post_num
+        try:
+            while True:
+                article_locators = feed_locator.locator(selectors.S_ARTICLE)
+                article_locators.first.scroll_into_view_if_needed()
+                # nearest_parent = article_locators.first.locator(
+                #     f"xpath=ancestor::div[count(.//div[@aria-describedby][@aria-labelledby]) > 2][1]"
+                # ).first
+
+                describedby_values = article_locators.first.get_attribute(
+                    "aria-describedby"
+                )
+
+                # aria-describedby="«r5l» «r5m» «r5n» «r5p» «r5o»"
+                # 1: article_info
+                # 2: article_message
+                # 3: article_image(content)
+                # 4: article_reaction
+                # 5: article_comment
+
+                page.wait_for_event("close", timeout=0)
+
+        except Exception as e:
+            print("ERROR in 'on_scraping': ", e)
+
+
+# 61571895352174
 
 
 def close_dialog(page: Page):
@@ -107,6 +135,14 @@ def close_dialog(page: Page):
         return True
     except PlaywrightTimeoutError:
         return False
+
+
+def find_nearest_ancestor(element: Locator, selector):
+    current_element = element
+    while current_element:
+        elm = current_element.locator(selector).first
+
+    return None
 
 
 ACTION_MAP = {

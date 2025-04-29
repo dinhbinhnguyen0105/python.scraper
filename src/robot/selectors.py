@@ -34,3 +34,6 @@ S_LABEL_COMBOBOX_LISTBOX = "label[role='combobox']"
 S_CHECK_BOX = "[role='checkbox']"
 
 # <input accept="image/*,image/heif,image/heic,video/*,video/mp4,video/x-m4v,video/x-matroska,.mkv" class="x1s85apg" multiple="" type="file">
+
+S_FEED = "[role='feed']"
+S_ARTICLE = "[aria-describedby][aria-labelledby]"

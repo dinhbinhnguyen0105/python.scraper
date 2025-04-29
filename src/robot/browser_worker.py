@@ -47,32 +47,10 @@ class BrowserWorker(QRunnable):
                     task_info=self.task_info,
                     signals=self.signals,
                 )
-                context.close()
+                # context.close()
         except Exception as e:
             print(e)
             self.signals.error_signal.emit(self.task_info, self.retry_num, str(e))
         finally:
             self.signals.finished_signal.emit(self.task_info, self.retry_num)
             return
-
-    # @pyqtSlot()
-    # def _test_run(self):
-    #     # test
-    #     total_group = random.randint(5, 10)
-    #     total_post = random.randint(10, 20)
-    #     try:
-    #         for i in range(total_group):
-    #             self.signals.main_progress_signal.emit(
-    #                 self.task_info.object_name, total_group, i
-    #             )
-    #             for j in range(total_post):
-    #                 time.sleep(random.uniform(0.01, 0.1))
-    #                 self.signals.sub_progress_signal.emit(
-    #                     self.task_info.object_name, total_post, j
-    #                 )
-    #                 # if random.uniform(0, 10) < 0.5:
-    #                 #     raise ZeroDivisionError("ERROR: ZeroDivisionError")
-
-    #         self.signals.finished_signal.emit(self.task_info, self.retry_num)
-    #     except Exception as e:
-    #         self.signals.error_signal.emit(self.task_info, self.retry_num, str(e))

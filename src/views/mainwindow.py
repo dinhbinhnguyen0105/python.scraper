@@ -31,12 +31,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         validator = QRegularExpressionValidator(regex)
         self.group_key_input.setValidator(validator)
         self.ignore_group_key_input.setValidator(validator)
-
-        self.ok_btn = self.buttonBox.button(QDialogButtonBox.StandardButton.Ok)
-        self.ok_btn.clicked.connect(self.handle_run)
+        self.group_key_input.setText("thuê, sang")
+        self.ignore_group_key_input.setText("trọ")
 
     def setup_events(self):
         self.thread_num_input.valueChanged.connect(self.handle_change_thread)
+        self.ok_btn = self.buttonBox.button(QDialogButtonBox.StandardButton.Ok)
+        self.ok_btn.clicked.connect(self.handle_run)
 
     def handle_change_thread(self):
         current_thread_num = self.thread_num_input.value()
@@ -64,7 +65,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.thread_num = current_thread_num
 
     def handle_launch_browser(self, current_widget: ThreadContainer_Widget):
-        user_data_dir_list = [current_widget.select_udd_input.text()]
+        user_data_dir_list = [current_widget.selected_dir_path]
         object_name_list = [current_widget.objectName()]
         target_group_keywords = [
             keyword.strip() for keyword in self.group_key_input.text().split(",")
@@ -95,10 +96,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             thread_widget.objectName() for thread_widget in self.list_thread_widget
         ]
         target_group_keywords = [
-            keyword.strip() for keyword in self.group_key_input.text().split(",")
+            keyword.strip()
+            for keyword in self.group_key_input.text().split(",")
+            if keyword.strip() != ""
         ]
         ignore_group_keywords = [
-            keyword.strip() for keyword in self.ignore_group_key_input.text().split(",")
+            keyword.strip()
+            for keyword in self.ignore_group_key_input.text().split(",")
+            if keyword.strip() != ""
         ]
         self.robot_controller.run_task(
             action_name=constants.SCRAPING,
