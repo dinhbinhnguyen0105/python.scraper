@@ -2,10 +2,10 @@ from typing import List, Any, Dict
 from contextlib import contextmanager
 from PyQt6.QtSql import QSqlQuery, QSqlDatabase
 
-from src import constants
+import constants
 
-# from src.my_types import IgnoreType, ResultType
-from src.database.database import initialize_database
+# from my_types import IgnoreType, ResultType
+from database.database import initialize_database
 
 
 @contextmanager

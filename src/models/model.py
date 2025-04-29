@@ -2,7 +2,7 @@
 from PyQt6.QtCore import Qt
 from PyQt6.QtSql import QSqlTableModel, QSqlDatabase
 
-from src import constants
+import constants
 
 
 class BaseModel(QSqlTableModel):

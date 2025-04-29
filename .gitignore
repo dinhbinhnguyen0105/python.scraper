@@ -1,6 +1,10 @@
 .venv
 .vscode
 repositories/browsers
+dist
+build
 __pycache__/
 *.pyc
 *.pyo
+
+# pyinstaller --noconfirm --onedir --windowed --name "ScraperApp" --paths src src/main.py 

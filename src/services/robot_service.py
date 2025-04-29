@@ -4,8 +4,8 @@ from collections import deque
 from typing import Any, List, Dict
 from PyQt6.QtCore import QThreadPool, QObject, pyqtSignal, pyqtSlot
 
-from src.my_types import TaskInfo
-from src.robot.browser_worker import BrowserWorker
+from my_types import TaskInfo
+from robot.browser_worker import BrowserWorker
 import json
 
 

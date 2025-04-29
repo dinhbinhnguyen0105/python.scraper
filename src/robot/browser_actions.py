@@ -1,4 +1,6 @@
-import random, traceback, sys
+# src/robot/browser_actions.py
+
+import random, traceback
 from time import sleep
 from datetime import datetime
 from PyQt6.QtCore import QObject, pyqtSignal
@@ -6,10 +8,10 @@ from playwright.sync_api import Page, TimeoutError as PlaywrightTimeoutError, Lo
 import re
 from phonenumbers import PhoneNumberMatcher
 
-from src import constants
-from src.my_types import TaskInfo
-from src.robot import selectors
-from src.services.db_service import IgnorePhoneService, IgnoreUIDService, ResultService
+import constants
+from my_types import TaskInfo
+from robot import selectors
+from services.db_service import IgnorePhoneService, IgnoreUIDService
 
 MIN = 60_000
 
@@ -39,11 +41,6 @@ def on_scraping(
     task_info: TaskInfo,
     signals: WorkerSignals,
 ):
-    from src.database.database import initialize_database
-
-    if not initialize_database():
-        raise Exception("failed to initialize_database")
-
     page.goto("https://www.facebook.com/groups/feed/", timeout=MIN)
     sidebar_locator = page.locator(
         f"{selectors.S_NAVIGATION}:not({selectors.S_BANNER} {selectors.S_NAVIGATION})"
@@ -53,7 +50,7 @@ def on_scraping(
         if _.count():
             try:
                 sleep(3)
-                _.first.scroll_into_view_if_needed(timeout=100)
+                _.first.scroll_into_view_if_needed(timeout=10_000)
             except:
                 break
     group_locators = sidebar_locator.first.locator(
@@ -177,7 +174,8 @@ def on_scraping(
                         article_user_url_locator.first.hover()
                         sleep(0.5)
                         user_url = article_user_url_locator.first.get_attribute(
-                            "href"
+                            "href",
+                            timeout=1_000,
                         ).split("?")[0]
                         user_url = (
                             user_url[0:-1] if user_url.endswith("/") else user_url
@@ -215,7 +213,8 @@ def on_scraping(
                         article_info_url_locator.first.hover()
                         sleep(0.5)
                         info_url = article_info_url_locator.first.get_attribute(
-                            "href"
+                            "href",
+                            timeout=1_000,
                         ).split("?")[0]
                         info_url = (
                             info_url[0:-1] if info_url.endswith("/") else info_url
@@ -264,8 +263,6 @@ def on_scraping(
                         post["post_content"] = message
                     except PlaywrightTimeoutError:
                         pass
-
-                    print(post)
                     results.append(post)
                     signals.sub_progress_signal.emit(
                         task_info.object_name, task_info.post_num, post_index

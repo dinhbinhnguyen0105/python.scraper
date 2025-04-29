@@ -1,7 +1,7 @@
 import os
 from PyQt6.QtWidgets import QWidget, QFileDialog
 
-from src.ui.thread_container_ui import Ui_ThreadContainer
+from ui.thread_container_ui import Ui_ThreadContainer
 
 
 class ThreadContainer_Widget(QWidget, Ui_ThreadContainer):

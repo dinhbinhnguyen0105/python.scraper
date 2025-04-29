@@ -1,6 +1,7 @@
-from src.views.mainwindow import MainWindow
+# src/app.py
+from views.mainwindow import MainWindow
 
-from src.database.database import initialize_database
+from database.database import initialize_database
 
 
 class Application:
@@ -8,8 +9,8 @@ class Application:
         pass
 
     def run(self):
-        # if not initialize_database():
-        #     raise Exception("initialize database failed!")
+        if not initialize_database():
+            raise Exception("initialize database failed!")
 
         self.mainwindow = MainWindow()
         self.mainwindow.show()

@@ -2,11 +2,11 @@ from typing import List
 from PyQt6.QtWidgets import QMainWindow, QDialogButtonBox, QWidget
 from PyQt6.QtCore import Qt, QRegularExpression
 from PyQt6.QtGui import QRegularExpressionValidator
-from src.ui.mainwindow_ui import Ui_MainWindow
+from ui.mainwindow_ui import Ui_MainWindow
 
-from src import constants
-from src.controllers.robot_controller import RobotController
-from src.views.thread_container_w import ThreadContainer_Widget
+import constants
+from controllers.robot_controller import RobotController
+from views.thread_container_w import ThreadContainer_Widget
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -134,9 +134,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         main_progress.setMinimum(0)
         main_progress.setMaximum(group_total)
         if main_progress.minimum() <= current_group <= main_progress.maximum():
-            main_progress.setValue(current_group + 1)
+            main_progress.setValue(current_group)
             current_w.main_progress_label.setHidden(False)
-            current_w.main_progress_label.setText(f"{current_group + 1}/{group_total}")
+            current_w.main_progress_label.setText(f"{current_group}/{group_total}")
 
     def on_sub_progress(self, object_name: str, post_total: int, current_post: int):
         current_w: ThreadContainer_Widget = self.findChild(
@@ -148,9 +148,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         sub_progress.setMinimum(0)
         sub_progress.setMaximum(post_total)
         if sub_progress.minimum() <= current_post <= sub_progress.maximum():
-            sub_progress.setValue(current_post + 1)
+            sub_progress.setValue(current_post)
             current_w.sub_progress_label.setHidden(False)
-            current_w.sub_progress_label.setText(f"{current_post + 1}/{post_total}")
+            current_w.sub_progress_label.setText(f"{current_post}/{post_total}")
 
     def on_log_message(self, msg: str):
         print("Message: ", msg)

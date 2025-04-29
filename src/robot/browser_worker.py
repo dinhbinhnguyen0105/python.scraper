@@ -1,13 +1,14 @@
-import random
-import time
-from PyQt6.QtCore import QRunnable, QObject, pyqtSignal, pyqtSlot, Qt
+# src/robot/browser_worker.py
+import threading
+from PyQt6.QtCore import QRunnable, QObject, pyqtSignal, pyqtSlot
 from playwright.sync_api import sync_playwright
 from playwright._impl._errors import TargetClosedError
 from undetected_playwright import Tarnished
+from PyQt6.QtSql import QSqlDatabase
 
-from src.my_types import TaskInfo
-from src.robot.browser_actions import ACTION_MAP
-from src import constants
+from my_types import TaskInfo
+from robot.browser_actions import ACTION_MAP
+import constants
 
 
 class WorkerSignals(QObject):
@@ -28,12 +29,27 @@ class BrowserWorker(QRunnable):
 
         self.setAutoDelete(True)
 
+    def _get_db(self) -> QSqlDatabase:
+        """Tạo connection độc lập cho mỗi thread"""
+        thread_id = threading.get_ident()
+        conn_name = f"{constants.DB_CONNECTION}_{thread_id}"
+        if not QSqlDatabase.contains(conn_name):
+            # Cách 1: Tạo mới hoàn toàn
+            db = QSqlDatabase.addDatabase("QSQLITE", conn_name)
+            db.setDatabaseName(constants.DB_PATH)
+            if not db.open():
+                raise RuntimeError(
+                    f"Cannot open DB in thread {thread_id}: {db.lastError().text()}"
+                )
+        return QSqlDatabase.database(conn_name)
+
     @pyqtSlot()
     def run(self):
         try:
             action_function = ACTION_MAP.get(self.task_info.action_name, None)
             if not action_function:
                 return False
+            db = self._get_db()
             with sync_playwright() as p:
                 context = p.chromium.launch_persistent_context(
                     user_data_dir=self.task_info.user_data_dir,
@@ -56,5 +72,8 @@ class BrowserWorker(QRunnable):
             print(e)
             self.signals.error_signal.emit(self.task_info, self.retry_num, str(e))
         finally:
+            QSqlDatabase.removeDatabase(
+                f"{constants.DB_CONNECTION}_{threading.get_ident()}"
+            )
             self.signals.finished_signal.emit(self.task_info, self.retry_num)
             return

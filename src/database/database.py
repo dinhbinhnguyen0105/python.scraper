@@ -1,19 +1,24 @@
 # src/database/database.py
-
+import os
 from PyQt6.QtSql import QSqlDatabase, QSqlQuery
 
-from src import constants
+import constants
 
 
 def initialize_database():
-    db = QSqlDatabase.addDatabase("QSQLITE", constants.DB_CONNECTION)
+    if QSqlDatabase.contains(constants.DB_CONNECTION):
+        db = QSqlDatabase.database(constants.DB_CONNECTION)
+    else:
+        db = QSqlDatabase.addDatabase("QSQLITE", constants.DB_CONNECTION)
     db.setDatabaseName(constants.DB_PATH)
     if not db.open():
+        print(os.path.abspath(constants.DB_PATH))
         raise Exception(
             f"An error occurred while opening the database: {db.lastError().text()}"
         )
     query = QSqlQuery(db)
     query.exec("PRAGMA foreign_keys = ON;")
+    query.exec("PRAGMA journal_mode=WAL;")
     try:
         if not db.transaction():
             raise Exception(f"Could not start transaction.")

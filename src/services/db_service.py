@@ -1,11 +1,10 @@
+import threading
 from typing import List, Any, Dict
 from contextlib import contextmanager
 from PyQt6.QtSql import QSqlQuery, QSqlDatabase
 
-from src import constants
-
-# from src.my_types import IgnoreType, ResultType
-from src.database.database import initialize_database
+import constants
+from database.database import initialize_database
 
 
 @contextmanager
@@ -30,7 +29,15 @@ class BaseService:
 
     @classmethod
     def get_db(cls) -> QSqlDatabase:
-        return QSqlDatabase.database(constants.DB_CONNECTION)
+        thread_id = threading.get_ident()
+        conn_name = f"{constants.DB_CONNECTION}_{thread_id}"
+        if not QSqlDatabase.contains(conn_name):
+            # Clone connection default (nếu đã init ở main)
+            default_db = QSqlDatabase.database(constants.DB_CONNECTION)
+            db = QSqlDatabase.cloneDatabase(default_db, conn_name)
+            if not db.open():
+                raise RuntimeError(f"Cannot open DB for thread {thread_id}")
+        return QSqlDatabase.database(conn_name)
 
     @classmethod
     def get_columns(cls) -> List[str]:
