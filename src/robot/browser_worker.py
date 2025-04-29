@@ -2,6 +2,7 @@ import random
 import time
 from PyQt6.QtCore import QRunnable, QObject, pyqtSignal, pyqtSlot, Qt
 from playwright.sync_api import sync_playwright
+from playwright._impl._errors import TargetClosedError
 from undetected_playwright import Tarnished
 
 from src.my_types import TaskInfo
@@ -48,6 +49,8 @@ class BrowserWorker(QRunnable):
                     signals=self.signals,
                 )
                 # context.close()
+        except TargetClosedError:
+            return
         except Exception as e:
             print(e)
             self.signals.error_signal.emit(self.task_info, self.retry_num, str(e))

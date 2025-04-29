@@ -6,6 +6,7 @@ from playwright.sync_api import Page, TimeoutError as PlaywrightTimeoutError, Lo
 from src import constants
 from src.my_types import TaskInfo
 from src.robot import selectors
+from src.services.db_service import IgnorePhoneService, IgnoreUIDService, ResultService
 
 MIN = 60_000
 
@@ -34,6 +35,11 @@ def on_scraping(
     task_info: TaskInfo,
     signals: WorkerSignals,
 ):
+    from src.database.database import initialize_database
+
+    if not initialize_database():
+        raise Exception("failed to initialize_database")
+
     page.goto("https://www.facebook.com/groups/feed/", timeout=MIN)
     sidebar_locator = page.locator(
         f"{selectors.S_NAVIGATION}:not({selectors.S_BANNER} {selectors.S_NAVIGATION})"
@@ -96,6 +102,7 @@ def on_scraping(
 
         # task_info.post_num
         try:
+            post_index = 0
             while True:
                 article_locators = feed_locator.locator(selectors.S_ARTICLE)
                 article_locators.first.scroll_into_view_if_needed()
@@ -106,18 +113,139 @@ def on_scraping(
                 describedby_values = article_locators.first.get_attribute(
                     "aria-describedby"
                 )
+                article_user_id = article_locators.first.get_attribute(
+                    "aria-labelledby"
+                )
+                (
+                    article_info_id,
+                    article_message_id,
+                    article_content_id,
+                    article_reaction_id,
+                    article_comment_id,
+                ) = describedby_values.split(" ")
 
-                # aria-describedby="«r5l» «r5m» «r5n» «r5p» «r5o»"
-                # 1: article_info
-                # 2: article_message
-                # 3: article_image(content)
-                # 4: article_reaction
-                # 5: article_comment
+                popup_locators = article_locators.first.locator(
+                    "[aria-haspopup='menu'][aria-expanded='false']"
+                )
 
-                page.wait_for_event("close", timeout=0)
+                article_user_locator = article_locators.first.locator(
+                    f"[id='{article_user_id}']"
+                )
+                article_info_locator = article_locators.first.locator(
+                    f"[id='{article_info_id}']"
+                )
+                article_message_locator = article_locators.first.locator(
+                    f"[id='{article_message_id}']"
+                )
+                article_content_locator = article_locators.first.locator(
+                    f"[id='{article_content_id}']"
+                )
+                article_reaction_locator = article_locators.first.locator(
+                    f"[id='{article_reaction_id}']"
+                )
+                article_comment_locator = article_locators.first.locator(
+                    f"[id='{article_comment_id}']"
+                )
+                user_url = None
+                info_url = None
+                message = None
+                content = None
+                reaction = None
+                comment = None
+                try:
+                    try:
+                        article_user_locator.first.wait_for(
+                            state="attached", timeout=1_000
+                        )
+                        article_user_locator.scroll_into_view_if_needed()
+                        article_user_locator.highlight()
+                        article_user_url_locator = article_user_locator.first.locator(
+                            "a"
+                        )
+                        article_user_url_locator.first.hover()
+                        sleep(0.5)
+                        user_url = article_user_url_locator.first.get_attribute(
+                            "href"
+                        ).split("?")[0]
+                        user_url = (
+                            user_url[0:-1] if user_url.endswith("/") else user_url
+                        )
+                        print("user_url: ", user_url)
+                        # TODO request data
+                        popup_locators.first.hover()
+                        sleep(0.5)
+                        uid = user_url.split("/")[-1]
+                        if IgnoreUIDService.is_field_value_exists(uid):
+                            print("Passed")
+                            continue
+                        else:
+                            print("Adding uid")
+                            IgnorePhoneService.create({"value": uid})
+
+                    except PlaywrightTimeoutError:
+                        pass
+
+                    try:
+                        article_info_locator.first.wait_for(
+                            state="attached", timeout=1_000
+                        )
+                        article_info_locator.scroll_into_view_if_needed()
+                        article_info_locator.highlight()
+                        article_info_url_locator = article_info_locator.first.locator(
+                            "a"
+                        )
+                        article_info_url_locator.first.hover()
+                        sleep(0.5)
+                        info_url = article_info_url_locator.first.get_attribute(
+                            "href"
+                        ).split("?")[0]
+                        info_url = (
+                            info_url[0:-1] if info_url.endswith("/") else info_url
+                        )
+                        if not info_url:
+                            continue
+                        else:
+                            print("info_url: ", info_url)
+                            popup_locators.first.hover()
+                            sleep(0.5)
+                    except PlaywrightTimeoutError:
+                        pass
+
+                    try:
+                        article_message_locator.first.wait_for(
+                            state="attached", timeout=1_000
+                        )
+                        article_message_locator.scroll_into_view_if_needed()
+                        article_message_locator.highlight()
+                        try:
+                            seemore_btn_locator = article_message_locator.first.locator(
+                                selectors.S_BUTTON
+                            )
+                            seemore_btn_locator.click(timeout=500)
+                        except PlaywrightTimeoutError:
+                            pass
+                        message = article_message_locator.first.text_content()
+
+                    except PlaywrightTimeoutError:
+                        pass
+
+                    print()
+                    signals.sub_progress_signal.emit(
+                        task_info.object_name, task_info.post_num, post_index
+                    )
+                    post_index += 1
+                    if post_index > task_info.post_num:
+                        return
+
+                except Exception as e:
+                    print(e)
+                    traceback.print_exc()
+                article_locators.first.evaluate("elm => elm.remove()")
+                # page.wait_for_event("close", timeout=0)
 
         except Exception as e:
-            print("ERROR in 'on_scraping': ", e)
+            # print("ERROR in 'on_scraping': ", e)
+            traceback.print_exc()
 
 
 # 61571895352174

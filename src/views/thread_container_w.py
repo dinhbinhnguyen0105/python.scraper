@@ -14,6 +14,7 @@ class ThreadContainer_Widget(QWidget, Ui_ThreadContainer):
 
     def setup_ui(self):
         self.select_udd_input.setDisabled(True)
+        self.launch_browser_btn.setDisabled(True)
         self.progress_message.setHidden(True)
         self.main_progress.setHidden(True)
         self.main_progress_label.setHidden(True)
@@ -50,6 +51,7 @@ class ThreadContainer_Widget(QWidget, Ui_ThreadContainer):
             self.select_udd_input.setText(directory_path)
             self.selected_dir_path = directory_path
             self.setObjectName(os.path.basename(directory_path))
+            self.launch_browser_btn.setDisabled(False)
 
     def handle_launch_browser(self):
         pass
