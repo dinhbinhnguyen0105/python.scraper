@@ -8,10 +8,10 @@ from playwright.sync_api import Page, TimeoutError as PlaywrightTimeoutError, Lo
 import re
 from phonenumbers import PhoneNumberMatcher
 
-import constants
-from my_types import TaskInfo
-from robot import selectors
-from services.db_service import IgnorePhoneService, IgnoreUIDService
+from src import constants
+from src.my_types import TaskInfo
+from src.robot import selectors
+from src.services.db_service import IgnorePhoneService, IgnoreUIDService
 
 MIN = 60_000
 

@@ -4,7 +4,7 @@ from PyQt6.QtSql import QSqlQuery, QSqlDatabase
 
 import constants
 
-# from my_types import IgnoreType, ResultType
+# from src.my_types import IgnoreType, ResultType
 from database.database import initialize_database
 
 

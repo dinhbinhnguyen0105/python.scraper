@@ -2,8 +2,8 @@
 import os
 from typing import List
 from PyQt6.QtCore import pyqtSignal, QObject, pyqtSlot
-from my_types import TaskInfo
-from services.robot_service import RobotService
+from src.my_types import TaskInfo
+from src.services.robot_service import RobotService
 
 
 class RobotController(QObject):

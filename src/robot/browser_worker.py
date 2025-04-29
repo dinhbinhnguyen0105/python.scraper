@@ -6,9 +6,9 @@ from playwright._impl._errors import TargetClosedError
 from undetected_playwright import Tarnished
 from PyQt6.QtSql import QSqlDatabase
 
-from my_types import TaskInfo
-from robot.browser_actions import ACTION_MAP
-import constants
+from src.my_types import TaskInfo
+from src.robot.browser_actions import ACTION_MAP
+from src import constants
 
 
 class WorkerSignals(QObject):

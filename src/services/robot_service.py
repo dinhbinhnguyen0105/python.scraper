@@ -1,12 +1,12 @@
 # src/services/robot_service.py
 import os
+import json
 from collections import deque
 from typing import Any, List, Dict
 from PyQt6.QtCore import QThreadPool, QObject, pyqtSignal, pyqtSlot
 
-from my_types import TaskInfo
-from robot.browser_worker import BrowserWorker
-import json
+from src.my_types import TaskInfo
+from src.robot.browser_worker import BrowserWorker
 
 
 class RobotService(QObject):

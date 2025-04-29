@@ -2,11 +2,11 @@ from typing import List
 from PyQt6.QtWidgets import QMainWindow, QDialogButtonBox, QWidget
 from PyQt6.QtCore import Qt, QRegularExpression
 from PyQt6.QtGui import QRegularExpressionValidator
-from ui.mainwindow_ui import Ui_MainWindow
 
-import constants
-from controllers.robot_controller import RobotController
-from views.thread_container_w import ThreadContainer_Widget
+from src import constants
+from src.ui.mainwindow_ui import Ui_MainWindow
+from src.controllers.robot_controller import RobotController
+from src.views.thread_container_w import ThreadContainer_Widget
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):

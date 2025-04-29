@@ -3,8 +3,8 @@ from typing import List, Any, Dict
 from contextlib import contextmanager
 from PyQt6.QtSql import QSqlQuery, QSqlDatabase
 
-import constants
-from database.database import initialize_database
+from src import constants
+from src.database.database import initialize_database
 
 
 @contextmanager

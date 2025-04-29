@@ -2,7 +2,7 @@
 import os
 from PyQt6.QtSql import QSqlDatabase, QSqlQuery
 
-import constants
+from src import constants
 
 
 def initialize_database():
