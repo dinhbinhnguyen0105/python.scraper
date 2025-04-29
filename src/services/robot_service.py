@@ -1,10 +1,12 @@
 # src/services/robot_service.py
+import os
 from collections import deque
 from typing import Any, List, Dict
 from PyQt6.QtCore import QThreadPool, QObject, pyqtSignal, pyqtSlot
 
 from src.my_types import TaskInfo
 from src.robot.browser_worker import BrowserWorker
+import json
 
 
 class RobotService(QObject):
@@ -12,6 +14,7 @@ class RobotService(QObject):
     main_progress_signal = pyqtSignal(str, int, int)
     sub_progress_signal = pyqtSignal(str, int, int)
     finished_signal = pyqtSignal()
+    data_signal = pyqtSignal(str, list)
 
     def __init__(self):
         super(RobotService, self).__init__()
@@ -53,6 +56,7 @@ class RobotService(QObject):
             worker.signals.main_progress_signal.connect(self.on_worker_main_progress)
             worker.signals.sub_progress_signal.connect(self.on_worker_sub_progress)
             worker.signals.log_message.connect(self.on_worker_message)
+            worker.signals.data_signal.connect(self.on_worker_data)
             self.task_in_progress[id(worker)] = (task_info, retry_num, worker)
 
             self.threadpool.start(worker)
@@ -109,3 +113,13 @@ class RobotService(QObject):
     @pyqtSlot(str)
     def on_worker_message(self, msg: str):
         self.log_message.emit(msg)
+
+    @pyqtSlot(str, list)
+    def on_worker_data(self, file_name: str, result: list):
+        # self.data_signal.emit(result)
+        os.makedirs("./results", exist_ok=True)  # Ensure the directory exists
+        with open(
+            os.path.join("./results", f"{file_name}.json"), mode="w", encoding="utf-8"
+        ) as f:
+            json.dump(result, f, ensure_ascii=False, indent=4)
+        self.log_message.emit(f"Result saved to ./results/{file_name}.json")

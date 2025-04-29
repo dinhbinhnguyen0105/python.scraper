@@ -209,7 +209,7 @@ class ResultService(BaseService):
 
 
 def main():
-    import sys
+    import sys, json
     from PyQt6.QtWidgets import QApplication
 
     app = QApplication([])
@@ -217,17 +217,41 @@ def main():
     if initialize_database():
         print("✅ Database đã khởi tạo/kiểm tra thành công.\n")
         print("Prepare import ignore phone")
-        phone_payload = [
-            {"value": "0123456789"},
-            {"value": "0987654321"},
-            {"value": "0909406001"},
-            {"value": "0123456789"},  # giá trị trùng sẽ bị skip
-        ]
-        is_import = IgnorePhoneService.import_data(phone_payload)
-        if is_import:
-            print("✅ Import thành công.\n")
-        print("read [0]: ", IgnorePhoneService.read(0))
-        print("read_all: ", IgnorePhoneService.read_all())
+        # phone_payload = [
+        #     {"value": "0123456789"},
+        #     {"value": "0987654321"},
+        #     {"value": "0909406001"},
+        #     {"value": "0123456789"},  # giá trị trùng sẽ bị skip
+        # ]
+        # is_import = IgnorePhoneService.import_data(phone_payload)
+        # if is_import:
+        #     print("✅ Import thành công.\n")
+        # /Volumes/KINGSTON/Dev/python/scraper/repositories/ignorePhoneNumber.json
+        # /Volumes/KINGSTON/Dev/python/scraper/repositories/ignoreUID.json
+        # with open(
+        #     "/Volumes/KINGSTON/Dev/python/scraper/repositories/ignorePhoneNumber.json",
+        #     encoding="utf8",
+        # ) as f:
+        #     payload = []
+        #     data = json.load(f)
+        #     for phone_number in data:
+        #         payload.append({"value": phone_number})
+        #     is_import = IgnorePhoneService.import_data(payload)
+        #     if is_import:
+        #         print("✅ Import thành công.\n")
+
+        with open(
+            "/Volumes/KINGSTON/Dev/python/scraper/repositories/ignoreUID.json",
+            encoding="utf8",
+        ) as f:
+            data = json.load(f)
+            payload = []
+            for uid in data:
+                payload.append({"value": uid})
+            is_import = IgnoreUIDService.import_data(payload)
+            if is_import:
+                print("✅ Import thành công.\n")
+
     else:
         print("❎ Database đã khởi tạo/kiểm tra thất bại.\n")
 

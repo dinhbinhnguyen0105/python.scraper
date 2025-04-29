@@ -1,6 +1,6 @@
 .venv
 .vscode
-repositories
+repositories/browsers
 __pycache__/
 *.pyc
 *.pyo

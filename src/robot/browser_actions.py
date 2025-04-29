@@ -1,7 +1,10 @@
 import random, traceback, sys
 from time import sleep
+from datetime import datetime
 from PyQt6.QtCore import QObject, pyqtSignal
 from playwright.sync_api import Page, TimeoutError as PlaywrightTimeoutError, Locator
+import re
+from phonenumbers import PhoneNumberMatcher
 
 from src import constants
 from src.my_types import TaskInfo
@@ -17,6 +20,7 @@ class WorkerSignals(QObject):
     error_signal = pyqtSignal(TaskInfo, int, str)  # task_info, retry_num, err_msg
     finished_signal = pyqtSignal(TaskInfo, int)  # task_info, retry_num
     log_message = pyqtSignal(str)
+    data_signal = pyqtSignal(str, list)
 
 
 def on_launching(
@@ -88,6 +92,8 @@ def on_scraping(
             continue
     # TODO crawl
     for index, group_url in enumerate(group_urls):
+        results = []
+
         page.goto(group_url, timeout=MIN / 2)
         signals.main_progress_signal.emit(task_info.object_name, len(group_urls), index)
         close_dialog(page)
@@ -103,7 +109,12 @@ def on_scraping(
         # task_info.post_num
         try:
             post_index = 0
-            while True:
+            while post_index < task_info.post_num:
+                post = {
+                    "user_url": "",
+                    "post_url": "",
+                    "post_content": "",
+                }
                 article_locators = feed_locator.locator(selectors.S_ARTICLE)
                 article_locators.first.scroll_into_view_if_needed()
                 # nearest_parent = article_locators.first.locator(
@@ -153,6 +164,7 @@ def on_scraping(
                 reaction = None
                 comment = None
                 try:
+                    # UID
                     try:
                         article_user_locator.first.wait_for(
                             state="attached", timeout=1_000
@@ -170,21 +182,27 @@ def on_scraping(
                         user_url = (
                             user_url[0:-1] if user_url.endswith("/") else user_url
                         )
-                        print("user_url: ", user_url)
                         # TODO request data
                         popup_locators.first.hover()
                         sleep(0.5)
                         uid = user_url.split("/")[-1]
                         if IgnoreUIDService.is_field_value_exists(uid):
-                            print("Passed")
+                            article_locators.first.evaluate("elm => elm.remove()")
+                            signals.sub_progress_signal.emit(
+                                task_info.object_name, task_info.post_num, post_index
+                            )
+                            post_index += 1
+                            if post_index > task_info.post_num:
+                                break
                             continue
                         else:
-                            print("Adding uid")
-                            IgnorePhoneService.create({"value": uid})
+                            IgnoreUIDService.create({"value": uid})
 
+                        post["user_url"] = user_url
                     except PlaywrightTimeoutError:
                         pass
 
+                    # PID
                     try:
                         article_info_locator.first.wait_for(
                             state="attached", timeout=1_000
@@ -203,14 +221,16 @@ def on_scraping(
                             info_url[0:-1] if info_url.endswith("/") else info_url
                         )
                         if not info_url:
+                            article_locators.first.evaluate("elm => elm.remove()")
                             continue
                         else:
-                            print("info_url: ", info_url)
                             popup_locators.first.hover()
                             sleep(0.5)
+                        post["post_url"] = info_url
                     except PlaywrightTimeoutError:
                         pass
 
+                    # MESSAGE
                     try:
                         article_message_locator.first.wait_for(
                             state="attached", timeout=1_000
@@ -224,27 +244,44 @@ def on_scraping(
                             seemore_btn_locator.click(timeout=500)
                         except PlaywrightTimeoutError:
                             pass
-                        message = article_message_locator.first.text_content()
 
+                        message = article_message_locator.first.text_content()
+                        for match in PhoneNumberMatcher(message, "VN"):
+                            phone_number = re.sub(r"\D", "", match.raw_string)
+                            if IgnorePhoneService.is_field_value_exists(phone_number):
+                                article_locators.first.evaluate("elm => elm.remove()")
+                                signals.sub_progress_signal.emit(
+                                    task_info.object_name,
+                                    task_info.post_num,
+                                    post_index,
+                                )
+                                post_index += 1
+                                if post_index > task_info.post_num:
+                                    break
+                                continue
+                            else:
+                                IgnorePhoneService.create({"value": phone_number})
+                        post["post_content"] = message
                     except PlaywrightTimeoutError:
                         pass
 
-                    print()
+                    print(post)
+                    results.append(post)
                     signals.sub_progress_signal.emit(
                         task_info.object_name, task_info.post_num, post_index
                     )
                     post_index += 1
                     if post_index > task_info.post_num:
-                        return
+                        break
+                    article_locators.first.evaluate("elm => elm.remove()")
 
                 except Exception as e:
                     print(e)
                     traceback.print_exc()
-                article_locators.first.evaluate("elm => elm.remove()")
-                # page.wait_for_event("close", timeout=0)
 
+            current_time = datetime.now().time().strftime("%H_%M_%S")
+            signals.data_signal.emit(f"{task_info.dir_name}_{current_time}", results)
         except Exception as e:
-            # print("ERROR in 'on_scraping': ", e)
             traceback.print_exc()
 
 

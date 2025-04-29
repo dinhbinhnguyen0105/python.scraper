@@ -5,6 +5,7 @@ greenlet==3.2.1
 idna==3.10
 iniconfig==2.1.0
 packaging==25.0
+phonenumbers==9.0.4
 playwright==1.51.0
 pluggy==1.5.0
 pyee==12.1.1

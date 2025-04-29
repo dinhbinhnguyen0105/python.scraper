@@ -16,6 +16,7 @@ class WorkerSignals(QObject):
     error_signal = pyqtSignal(TaskInfo, int, str)  # task_info, retry_num, err_msg
     finished_signal = pyqtSignal(TaskInfo, int)  # task_info, retry_num
     log_message = pyqtSignal(str)
+    data_signal = pyqtSignal(str, list)
 
 
 class BrowserWorker(QRunnable):

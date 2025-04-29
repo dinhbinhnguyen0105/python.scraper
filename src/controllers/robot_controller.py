@@ -11,6 +11,7 @@ class RobotController(QObject):
     main_progress_signal = pyqtSignal(str, int, int)
     sub_progress_signal = pyqtSignal(str, int, int)
     log_message = pyqtSignal(str)
+    data_signal = pyqtSignal(str, list)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -19,6 +20,7 @@ class RobotController(QObject):
         self.robot_service.sub_progress_signal.connect(self.sub_progress_signal)
         self.robot_service.log_message.connect(self.log_message)
         self.robot_service.finished_signal.connect(self.finished_signal)
+        self.robot_service.data_signal.connect(self.data_signal)
 
     @pyqtSlot()
     def run_task(
@@ -32,7 +34,7 @@ class RobotController(QObject):
         settings_max_thread = len(user_data_dir_list)
         settings_max_retries = 3
         headless = False
-        post_num = 200
+        post_num = 10
 
         tasks = []
         for index, user_data_dir in enumerate(user_data_dir_list):
